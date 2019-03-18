@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 class GaussianBayes:
 
     def fit(self, X, Y, test_size=0.5):
-        a_values = [-0.1, -0.05, -0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1]
-        b_values = [-0.1, -0.05, -0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1]
+        a_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1]
+        b_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1]
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=0)
         error_best, best_a, best_b, errors = self.modelSelection(X_train, X_test, y_train, y_test, a_values,b_values)
         self.p_y = self.estimate_a_priori(y_train)
@@ -69,6 +69,10 @@ class GaussianBayes:
         for classValue, instances in separated.items():
             summaries[classValue] = self.summarize(instances, a, b)
         return summaries
+
+    def calculateProbability(self, x, mean, stdev):
+        exponent = math.exp(-(math.pow(x - mean, 2) / (2 * math.pow(stdev, 2))))
+        return (1 / (math.sqrt(2 * math.pi) * stdev)) * exponent
 
     def estimate_p_y_x(self, p_y, summaries, X):
         N = np.size(X, 0)
