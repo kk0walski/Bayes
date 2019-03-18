@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 class DiscreteBayes:
 
     def fit(self, X, Y, bins, test_size=0.5):
-        a_values = [3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
-        b_values = [3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
+        a_values = [2, 3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
+        b_values = [2, 3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = test_size, random_state = 0)
         error_best, best_a, best_b, errors = self.modelSelection(X_train, X_test, y_train, y_test, bins, a_values, b_values)
         self.p_y = self.estimate_a_priori(y_train)
