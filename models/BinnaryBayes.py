@@ -7,18 +7,18 @@ class BinnaryBayes:
         a_values = [2, 3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
         b_values = [2, 3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = test_size, random_state = 0)
-        error_best, best_a, best_b, errors = self.modelSelection(X_train, X_test, y_train, y_test, a_values, b_values)
         self.p_y = self.estimate_a_priori(y_train)
+        error_best, best_a, best_b, errors = self.modelSelection(self.p_y, X_train, X_test, y_train, y_test, a_values, b_values)
         self.p_x_y = self.estimate_p_x_y(X_train, y_train, best_a, best_b);
 
-    def modelSelection(self, Xtrain, Xval, Ytrain, Yval, aValues, bValues):
+    def modelSelection(self, p_y, Xtrain, Xval, Ytrain, Yval, aValues, bValues):
         errors = np.zeros((len(aValues), len(bValues)))
 
         error_best = float("inf")
 
         for a in range(len(aValues)):
             for b in range(len(bValues)):
-                p_y_x = self.estimate_p_y_x(self.estimate_a_priori(Ytrain), self.estimate_p_x_y(Xtrain, Ytrain, aValues[a], bValues[b]), Xval)
+                p_y_x = self.estimate_p_y_x(p_y, self.estimate_p_x_y(Xtrain, Ytrain, aValues[a], bValues[b]), Xval)
                 errors[a,b] = self.error_fun(p_y_x, Yval)
                 if errors[a,b] < error_best:
                     error_best = errors[a,b]
@@ -35,7 +35,7 @@ class BinnaryBayes:
             for j in range(np.size(p_y_x, 1)):
                 if p_y_x[i,max] <= p_y_x[i,j]:
                     max = j
-            if max != Y[i]:
+            if self.p_y[max,1] != Y[i]:
                 error_val = error_val + 1
 
         error_val = error_val/len(Y)
@@ -60,13 +60,16 @@ class BinnaryBayes:
         M = np.unique(yTrain).size
         N = len(yTrain)
 
-        p_y = np.zeros((M,1))
+        p_y = np.zeros((M,2), dtype='object')
+
+        for idx, a in enumerate(np.unique(yTrain)):
+            p_y[idx, 1] = a
 
         for a in range(M):
             for b in range(N):
-                if yTrain[b] == a:
-                    p_y[a] = p_y[a] + 1
-            p_y[a] = p_y[a]/N
+                if yTrain[b] == p_y[a,1]:
+                    p_y[a,0] = p_y[a,0] + 1
+            p_y[a,0] = p_y[a,0]/N
 
         return p_y
 
@@ -79,7 +82,7 @@ class BinnaryBayes:
         sum1 = 0
         sum2 = 0
 
-        for i in range(M):
+        for idx, i in enumerate(np.unique(Ytrain)):
             for j in range(D):
                 for k in range(len(Ytrain)):
                     if Ytrain[k] == i and Xtrain[k,j] == 1:
@@ -88,7 +91,7 @@ class BinnaryBayes:
                         sum2 = sum2 + 1
                 sum1 = sum1 + a - 1
                 sum2 = sum2 + a + b - 2
-                p_x_y[i,j] = float(sum1/sum2)
+                p_x_y[idx,j] = float(sum1/sum2)
                 sum1 = 0
                 sum2 = 0
         return p_x_y
@@ -110,7 +113,7 @@ class BinnaryBayes:
                         iloczyn = iloczyn*p_x_1_y[b,c]
                     else:
                         iloczyn = iloczyn*p_x_0_y[b,c]
-                iloczyn = iloczyn*p_y[b]
+                iloczyn = iloczyn*p_y[b, 0]
                 sum = sum + iloczyn
                 iloczyn = 1
             for b in range(M):
@@ -119,7 +122,7 @@ class BinnaryBayes:
                         iloczyn = iloczyn*p_x_1_y[b,c]
                     else:
                         iloczyn = iloczyn*p_x_0_y[b,c]
-                iloczyn = iloczyn*p_y[b]
+                iloczyn = iloczyn*p_y[b, 0]
                 p_y_x[a,b] = iloczyn/float(sum)
                 iloczyn = 1
             sum = 0
@@ -132,5 +135,5 @@ class BinnaryBayes:
         predictedData = self.estimate_p_y_x(self.p_y, self.p_x_y, X)
         reasults = []
         for predict in predictedData:
-            reasults.append(np.argmax(predict))
+            reasults.append(self.p_y[np.argmax(predict),1])
         return np.array(reasults)

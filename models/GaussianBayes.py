@@ -8,18 +8,18 @@ class GaussianBayes:
         a_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
         b_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size)
-        error_best, best_a, best_b, errors = self.modelSelection(X_train, X_test, y_train, y_test, a_values,b_values)
         self.p_y = self.estimate_a_priori(y_train)
-        self.summaries = self.summarizeByClass(X_train, y_train, best_a, best_b)
+        error_best, best_a, best_b, errors = self.modelSelection(self.p_y, X_train, X_test, y_train, y_test, a_values, b_values)
+        self.summaries = self.summarizeByClass(X_train, y_train, best_a, best_b);
 
-    def modelSelection(self, Xtrain, Xval, Ytrain, Yval, aValues, bValues):
+    def modelSelection(self, p_y, Xtrain, Xval, Ytrain, Yval, aValues, bValues):
         errors = np.zeros((len(aValues), len(bValues)))
 
         error_best = float("inf")
 
         for a in range(len(aValues)):
             for b in range(len(bValues)):
-                p_y_x = self.estimate_p_y_x(self.estimate_a_priori(Ytrain), self.summarizeByClass(Xtrain, Ytrain, aValues[a], bValues[b]), Xval)
+                p_y_x = self.estimate_p_y_x(p_y, self.summarizeByClass(Xtrain, Ytrain, aValues[a], bValues[b]), Xval)
                 errors[a,b] = self.error_fun(p_y_x, Yval)
                 if errors[a,b] < error_best:
                     error_best = errors[a,b]
@@ -32,13 +32,16 @@ class GaussianBayes:
         M = np.unique(yTrain).size
         N = len(yTrain)
 
-        p_y = np.zeros((M,1))
+        p_y = np.zeros((M,2), dtype='object')
+
+        for idx, a in enumerate(np.unique(yTrain)):
+            p_y[idx, 1] = a
 
         for a in range(M):
             for b in range(N):
-                if yTrain[b] == a:
-                    p_y[a] = p_y[a] + 1
-            p_y[a] = p_y[a]/N
+                if yTrain[b] == p_y[a,1]:
+                    p_y[a,0] = p_y[a,0] + 1
+            p_y[a,0] = p_y[a,0]/N
 
         return p_y
 
@@ -83,13 +86,13 @@ class GaussianBayes:
         for a in range(N):
             for b in range(M):
                 for c in range(np.size(X, 1)):
-                    mean, stdev = summaries[float(b)][c]
+                    mean, stdev = summaries[p_y[b,1]][c]
                     x = X[a,c]
                     try:
                         iloczyn += math.log(self.calculateProbability(x, mean, stdev))
                     except ValueError:
                         iloczyn += math.log(0.00001)
-                iloczyn = iloczyn + math.log(p_y[b])
+                iloczyn = iloczyn + math.log(p_y[b, 0])
                 p_y_x[a, b] = iloczyn
                 iloczyn = 0
         return p_y_x
@@ -100,12 +103,12 @@ class GaussianBayes:
         for i in range(len(Y)):
             max = 0
             for j in range(np.size(p_y_x, 1)):
-                if p_y_x[i, max] <= p_y_x[i, j]:
+                if p_y_x[i,max] <= p_y_x[i,j]:
                     max = j
-            if max != Y[i]:
+            if self.p_y[max,1] != Y[i]:
                 error_val = error_val + 1
 
-        error_val = error_val / len(Y)
+        error_val = error_val/len(Y)
 
         return error_val
 
@@ -130,5 +133,5 @@ class GaussianBayes:
         predictedData = self.estimate_p_y_x(self.p_y, self.summaries, X)
         reasults = []
         for predict in predictedData:
-            reasults.append(np.argmax(predict))
+            reasults.append(self.p_y[np.argmax(predict),1])
         return np.array(reasults)
