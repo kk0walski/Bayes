@@ -42,6 +42,17 @@ class BinnaryBayes:
 
         return error_val
 
+    def error_values(self, Y, true_y):
+        error_val = 0
+
+        for i in range(len(true_y)):
+            if Y[i] != true_y[i]:
+                error_val = error_val + 1
+        return error_val / len(true_y)
+
+    def accuracy_values(self, Y, true_y):
+        return 1 - self.error_values(Y, true_y)
+
     def accuracy(self, p_y_x, Y):
         return 1 - self.error_fun(p_y_x, Y)
 
@@ -116,3 +127,10 @@ class BinnaryBayes:
 
     def predict(self, X):
         return self.estimate_p_y_x(self.p_y, self.p_x_y, X)
+
+    def predict(self, X):
+        predictedData = self.estimate_p_y_x(self.p_y, self.p_x_y, X)
+        reasults = []
+        for predict in predictedData:
+            reasults.append(np.argmax(predict))
+        return np.array(reasults)

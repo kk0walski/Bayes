@@ -5,16 +5,12 @@ from sklearn.model_selection import train_test_split
 class GaussianBayes:
 
     def fit(self, X, Y, test_size=0.5):
-        a_values = [-0.5, -0.3, -0.2, -0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
-        b_values = [-0.5, -0.3, -0.2, -0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
+        a_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
+        b_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size)
         error_best, best_a, best_b, errors = self.modelSelection(X_train, X_test, y_train, y_test, a_values,b_values)
         self.p_y = self.estimate_a_priori(y_train)
         self.summaries = self.summarizeByClass(X_train, y_train, best_a, best_b)
-        print(best_a)
-        print(best_b)
-        print(error_best)
-
 
     def modelSelection(self, Xtrain, Xval, Ytrain, Yval, aValues, bValues):
         errors = np.zeros((len(aValues), len(bValues)))
@@ -56,10 +52,10 @@ class GaussianBayes:
         return separated
 
     def mean(self, numbers, a, b):
-        return np.mean(numbers)+a+b-0.002
+        return np.mean(numbers)+a+b
 
     def stdev(self, numbers, b):
-        return np.std(numbers)+b+0.5
+        return math.fabs(np.std(numbers)+b)+0.0001
 
     def summarize(self, dataset, a, b):
         summaries = [(self.mean(attribute, a, b), self.stdev(attribute, b)) for attribute in zip(*dataset)]
@@ -82,17 +78,20 @@ class GaussianBayes:
 
         p_y_x = np.zeros((N, M))
 
-        iloczyn = 1
+        iloczyn = 0
 
         for a in range(N):
             for b in range(M):
                 for c in range(np.size(X, 1)):
                     mean, stdev = summaries[float(b)][c]
                     x = X[a,c]
-                    iloczyn *= self.calculateProbability(x, mean, stdev)
-                iloczyn = iloczyn * p_y[b]
+                    try:
+                        iloczyn += math.log(self.calculateProbability(x, mean, stdev))
+                    except ValueError:
+                        iloczyn += math.log(0.00001)
+                iloczyn = iloczyn + math.log(p_y[b])
                 p_y_x[a, b] = iloczyn
-                iloczyn = 1
+                iloczyn = 0
         return p_y_x
 
     def error_fun(self, p_y_x, Y):
@@ -110,8 +109,26 @@ class GaussianBayes:
 
         return error_val
 
+    def error_values(self, Y, true_y):
+        error_val = 0
+
+        for i in range(len(true_y)):
+            if Y[i] != true_y[i]:
+                error_val = error_val + 1
+        return error_val/len(true_y)
+
+    def accuracy_values(self, Y, true_y):
+        return 1 - self.error_values(Y, true_y)
+
     def accuracy(self, p_y_x, Y):
         return 1 - self.error_fun(p_y_x, Y)
 
     def predict(self, X):
-        return self.estimate_p_y_x(self.p_y, self.summaries, X)
+        return self.estimate_p_y_x(self.p_y, self.p_x_y, X)
+
+    def predictValues(self, X):
+        predictedData = self.estimate_p_y_x(self.p_y, self.summaries, X)
+        reasults = []
+        for predict in predictedData:
+            reasults.append(np.argmax(predict))
+        return np.array(reasults)
