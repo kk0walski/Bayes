@@ -1,0 +1,17 @@
+_minted-praca/
+*.aux
+*.bbl
+*.blg
+*.lof
+*.lop
+*.lot
+*.out
+*.synctex(busy)
+praca.pdf
+oswiadczenie.pdf
+*.toc
+*.log
+*.gz
+*.fls
+*.fdb_latexmk
+*.rtf
