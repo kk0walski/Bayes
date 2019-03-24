@@ -4,14 +4,11 @@ from sklearn.model_selection import train_test_split
 
 class DiscreteBayes:
 
-    def fit(self, X, Y, bins, test_size=0.5):
-        a_values = [2, 3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
-        b_values = [2, 3, 5, 10, 20, 30, 50, 100, 150, 300, 500, 1000]
-        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=0)
-        self.p_y = self.estimate_a_priori(y_train)
-        error_best, best_a, best_b, errors = self.modelSelection(self.p_y, X_train, X_test, y_train, y_test, bins,
-                                                                 a_values, b_values)
-        self.p_x_y = self.estimate_p_x_y(X_train, y_train, bins, best_a, best_b);
+    def fit(self, X, Y, bins):
+        best_a = 1
+        best_b = 1
+        self.p_y = self.estimate_a_priori(Y)
+        self.p_x_y = self.estimate_p_x_y(X, Y, bins, best_a, best_b);
         self.bins = bins
 
     def modelSelection(self, p_y, Xtrain, Xval, Ytrain, Yval, bins, aValues, bValues):

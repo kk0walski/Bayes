@@ -55,7 +55,7 @@ class BinsDiscrete:
                 -------
                 self
         """
-        X = check_array(X)
+        X = check_array(X, dtype='numeric')
         valid_strategy = ('uniform', 'quantile', 'kmeans')
         if self.strategy not in valid_strategy:
             raise ValueError("Valid options for 'strategy' are {}. "
@@ -83,7 +83,7 @@ class BinsDiscrete:
 
             elif self.strategy == 'quntaline':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if [int(i) for i in np.__version__.split('.')] < [1, 9]:
+                if [int(i) for i in np.__version__.split('.')] < (1, 9):
                     quantiles = list(quantiles)
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
@@ -113,6 +113,8 @@ class BinsDiscrete:
 
         self.bin_edges_ = bin_edges
         self.n_bins_ = n_bins
+
+        return self
 
 
     def _validate_n_bins(self, n_features):

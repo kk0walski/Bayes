@@ -4,13 +4,11 @@ from sklearn.model_selection import train_test_split
 
 class GaussianBayes:
 
-    def fit(self, X, Y, test_size=0.5):
-        a_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
-        b_values = [-0.1, -0.05, -0.03, -0.02, -0.01, -0.005, -0.003, -0.002, 0, 0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.5]
-        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size)
-        self.p_y = self.estimate_a_priori(y_train)
-        error_best, best_a, best_b, errors = self.modelSelection(self.p_y, X_train, X_test, y_train, y_test, a_values, b_values)
-        self.summaries = self.summarizeByClass(X_train, y_train, best_a, best_b);
+    def fit(self, X, Y):
+        best_a = 0
+        best_b = 0
+        self.p_y = self.estimate_a_priori(Y)
+        self.summaries = self.summarizeByClass(X, Y, best_a, best_b);
 
     def modelSelection(self, p_y, Xtrain, Xval, Ytrain, Yval, aValues, bValues):
         errors = np.zeros((len(aValues), len(bValues)))
@@ -58,7 +56,7 @@ class GaussianBayes:
         return np.mean(numbers)+a+b
 
     def stdev(self, numbers, b):
-        return math.fabs(np.std(numbers)+b)+0.0001
+        return math.fabs(np.std(numbers)+b)
 
     def summarize(self, dataset, a, b):
         summaries = [(self.mean(attribute, a, b), self.stdev(attribute, b)) for attribute in zip(*dataset)]
